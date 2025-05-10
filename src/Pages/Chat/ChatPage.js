@@ -2,8 +2,8 @@ import { useLocation } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
+import socket from './sockets';
 
-const socket = io('http://localhost:5000');
 
 const ChatPage = () => {
     const location = useLocation();
@@ -15,7 +15,8 @@ const ChatPage = () => {
     const storedUser =
         JSON.parse(sessionStorage.getItem("user")) ||
         JSON.parse(localStorage.getItem("user"));
-    const senderId = storedUser?.id;
+    const senderEmail = storedUser?.email;
+
 
     // Fetch user data
     useEffect(() => {
@@ -27,41 +28,61 @@ const ChatPage = () => {
     }, [receiverId]);
 
     // Poll messages every 3 seconds
-    useEffect(() => {
-        let interval;
-        if (senderId && receiverId) {
-            const fetchMessages = () => {
-                axios.get(`http://localhost:5000/api/chat/conversation/${senderId}/${receiverId}`)
-                    .then(res => setMessages(res.data))
-                    .catch(err => console.error("Error fetching messages:", err));
-            };
+   // Fetch messages by email instead of id
+useEffect(() => {
+    if (senderEmail && userData?.email) {
+        const fetchMessages = () => {
+            axios.get(`http://localhost:5000/api/chat/conversation/${senderEmail}/${userData.email}`)
+                .then(res => setMessages(res.data))
+                .catch(err => console.error("Error fetching messages:", err));
+        };
 
-            fetchMessages(); // initial fetch
-            // interval = setInterval(fetchMessages, 1000); 
-        }
+        fetchMessages(); // initial fetch
+    }
+}, [senderEmail, userData]);
 
-        return () => clearInterval(interval); // cleanup on unmount
-    }, [senderId, receiverId]);
 
-    useEffect(() => {
-        // Listen for incoming messages from other clients
-        socket.on('receive_message', (message) => {
-          setMessages((prevMessages) => [...prevMessages, message]);
-        });
-      }, []);
-
-    const handleSend = async () => {
-        if (input.trim() === '') return;
-
-        try {
-            const payload = { senderId, receiverId, text: input };
-            const res = await axios.post('http://localhost:5000/api/chat/send', payload);
-            setMessages((prev) => [...prev, res.data]); // optional, since polling will get the message too
-            setInput('');
-        } catch (err) {
-            console.error("Error sending message:", err);
+ useEffect(() => {
+    const handleMessage = (message) => {
+        if (
+            (message.senderEmail === storedUser.email && message.receiverEmail === userData.email) ||
+            (message.senderEmail === userData.email && message.receiverEmail === storedUser.email)
+        ) {
+            setMessages((prevMessages) => [...prevMessages, message]);
         }
     };
+
+    socket.on('receive_message', handleMessage);
+
+    // Cleanup when component unmounts or re-renders
+    return () => {
+        socket.off('receive_message', handleMessage);
+    };
+}, [storedUser, userData]);
+
+
+   const handleSend = async () => {
+    if (input.trim() === '') return;
+
+    try {
+        const payload = {
+            senderEmail,
+            receiverEmail: userData.email,
+            text: input
+        };
+
+        const res = await axios.post('http://localhost:5000/api/chat/send', payload);
+
+        // Emit the message to the socket server
+        socket.emit('send_message', res.data);
+
+        setMessages((prev) => [...prev, res.data]);
+        setInput('');
+    } catch (err) {
+        console.error("Error sending message:", err);
+    }
+};
+
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') handleSend();
@@ -75,7 +96,7 @@ const ChatPage = () => {
 
                 <div className="chat_messages">
                     {messages.map((msg, index) => {
-                        const isUser = msg.senderId === senderId;
+                        const isUser = msg.senderEmail === senderEmail;
                         const avatarSrc = isUser
                             ? `http://localhost:5000${storedUser?.avatar || '/assets/default-profile.png'}`
                             : `http://localhost:5000${userData?.avatar || '/assets/default-profile.png'}`;
@@ -86,7 +107,7 @@ const ChatPage = () => {
                                 {!isUser && (
                                     <div className="sender_info">
                                         <img className="avatar" src={avatarSrc} alt={displayName} />
-                                        <span className="username">{displayName}</span>
+                                        {/* <span className="username">{displayName}</span> */}
                                     </div>
                                 )}
                                 <div className={`chat_bubble ${isUser ? 'user' : 'other'}`}>
@@ -94,7 +115,7 @@ const ChatPage = () => {
                                 </div>
                                 {isUser && (
                                     <div className="sender_info">
-                                        <span className="username">{displayName}</span>
+                                        {/* <span className="username">{displayName}</span> */}
                                         <img className="avatar" src={avatarSrc} alt={displayName} />
                                     </div>
                                 )}
