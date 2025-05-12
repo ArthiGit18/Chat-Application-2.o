@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback  } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronDown, FiLogOut, FiSettings, FiUser } from 'react-icons/fi';
 import { RiDeleteBinLine } from "react-icons/ri";
+import socket from './sockets'; // Assuming you have socket initialized
 
 const ContactList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,34 +11,73 @@ const ContactList = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
-  // 🔄 Get the stored user from session or local storage
+  // Get the stored user from session or local storage
   const storedUser =
     JSON.parse(sessionStorage.getItem('user')) ||
     JSON.parse(localStorage.getItem('user'));
 
-  // 🔄 Function to fetch contacts (excluding the logged-in user)
-  const fetchContacts = async () => {
+  // Fetch contacts (excluding the logged-in user)
+ 
+  // ✅ Wrapping fetchContacts with useCallback
+  const fetchContacts = useCallback(async () => {
     try {
       const res = await axios.get('http://localhost:5000/api/auth/users/loggedin');
-      const users = res.data
-        .filter((user) => user.email !== storedUser?.email) // Exclude logged-in user by email
-        .map((user) => ({
-          id: user._id,
-          name: user.username,
-          message: 'Last message...',
-          avatar: user.avatar || '/assets/default-profile.png',
-          email: user.email, // Add email to the contact data
-        }));
+      const users = res.data.filter((user) => user.email !== storedUser?.email);
 
-      setContactsData(users);
+      const updatedUsers = await Promise.all(
+        users.map(async (user) => {
+          const lastMessageResponse = await axios.get(
+            `http://localhost:5000/api/chat/lastMessage/${storedUser.email}/${user.email}`
+          );
+
+          const unseenCountResponse = await axios.get(
+            `http://localhost:5000/api/chat/unseenCount/${storedUser.email}/${user.email}`
+          );
+
+          return {
+            id: user._id,
+            name: user.username,
+            avatar: user.avatar || '/assets/default-profile.png',
+            email: user.email,
+            lastMessage: lastMessageResponse.data?.text || 'No messages yet',
+            unseenCount: unseenCountResponse.data.count || 0,
+          };
+        })
+      );
+
+      setContactsData(updatedUsers);
     } catch (err) {
       console.error('Failed to fetch contacts:', err);
     }
-  };
+  }, [storedUser.email]);
 
-  useEffect(() => {
+
+  // 🔄 Listen for new messages from the socket
+ useEffect(() => {
     fetchContacts();
-  }, []);
+
+    const handleNewMessage = (newMessage) => {
+      setContactsData((prevContacts) =>
+        prevContacts.map((contact) => {
+          if (contact.email === newMessage.senderEmail || contact.email === newMessage.receiverEmail) {
+            return {
+              ...contact,
+              lastMessage: newMessage.text,
+              unseenCount: contact.unseenCount + 1,
+            };
+          }
+          return contact;
+        })
+      );
+    };
+
+    socket.on('receive_message', handleNewMessage);
+
+    // Cleanup listener on unmount
+    return () => {
+      socket.off('receive_message', handleNewMessage);
+    };
+  }, [fetchContacts]);
 
   const filteredContacts = [...contactsData].sort((a, b) => {
     const aMatch = a.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -59,21 +99,40 @@ const ContactList = () => {
     navigate('/profile', { state: { userId: storedUser._id } });
   };
 
-  // Function to handle delete request
   const handleDeleteContact = async (email) => {
-  try {
-    // Send email in the request body
-    const response = await axios.delete('http://localhost:5000/api/auth/deleteProfile', {
-      data: { email }, // Send the email in the data field
-    });
-    console.log('Contact deleted:', response.data);
+    try {
+      await axios.delete('http://localhost:5000/api/auth/deleteProfile', {
+        data: { email },
+      });
 
-    // Remove the deleted contact from the local state
-    setContactsData((prevContacts) => prevContacts.filter((contact) => contact.email !== email));
-  } catch (error) {
-    console.error('Error deleting contact:', error);
-  }
-};
+      setContactsData((prevContacts) =>
+        prevContacts.filter((contact) => contact.email !== email)
+      );
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+    }
+  };
+
+  const handleContactClick = async (contact) => {
+    try {
+      // Mark all messages as seen when the chat is opened
+      await axios.put(`http://localhost:5000/api/chat/markAsSeen/${contact.email}/${storedUser.email}`);
+
+      // Navigate to chat page
+      navigate(`/chatPage`, {
+        state: { id: contact.id, username: contact.name },
+      });
+
+      // Reset the unseen count to 0 after clicking
+      setContactsData((prevContacts) =>
+        prevContacts.map((c) =>
+          c.email === contact.email ? { ...c, unseenCount: 0 } : c
+        )
+      );
+    } catch (error) {
+      console.error('Error marking messages as seen:', error);
+    }
+  };
 
   return (
     <div className="contact_list">
@@ -122,25 +181,25 @@ const ContactList = () => {
           <div
             key={contact.id}
             className="contact_list_member"
-            onClick={() =>
-              navigate(`/chatPage`, {
-                state: { id: contact.id, username: contact.name },
-              })
-            }
+            onClick={() => handleContactClick(contact)}
             style={{ cursor: 'pointer' }}
           >
             <img src={`http://localhost:5000${contact.avatar}`} alt="avatar" />
             <div className="contact_list_member_info">
               <h3>{contact.name}</h3>
-              <p>{contact.message}</p>
+              <p className="last_message">{contact.lastMessage}</p>
             </div>
 
-            <div className="delete_icon">
+            <div className="contact_list_member_meta">
+              {contact.unseenCount > 0 && (
+                <span className="unseen_count">{contact.unseenCount}</span>
+              )}
               <RiDeleteBinLine
                 size={20}
+                className='bin_icon'
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent triggering the parent click event
-                  handleDeleteContact(contact.email); // Call delete function with contact's email
+                  handleDeleteContact(contact.email);
                 }}
                 style={{ cursor: 'pointer', color: 'red' }}
               />
