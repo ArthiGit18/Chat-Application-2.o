@@ -63,7 +63,7 @@ const Login = () => {
                         <p>Don't have an account? <a href="/register">Register here</a></p>
                     </div>
 
-                    <hr />
+                    <hr style={{ margin: "20px 0" }} />
 
                     <div className="social_login">
                         <p>Or login with:</p>
@@ -73,13 +73,17 @@ const Login = () => {
                                 onClick={() => window.location.href = "http://localhost:5000/api/auth/google"}
 
                             >
-                                <GoogleIcon /> Sign in with Google
+                               <p> <GoogleIcon style={{marginRight : "10px"}} /> Sign in with Google</p>
                             </button>
                         </div>
                     </div>
 
                     <div className="forgot_password">
                         <p>Forgot your password? <a href="/reset-password">Reset it here</a></p>
+                    </div>
+
+                    <div className='robo'>
+                        <img src="assets/welcome/2.png" alt="robot" />
                     </div>
                 </div>
             </div>

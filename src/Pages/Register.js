@@ -67,6 +67,10 @@ const Register = () => {
                     <div className="login_link">
                         <p>Already have an account? <a href="/login">Login here</a></p>
                     </div>
+
+                     <div className='robo'>
+                        <img src="assets/welcome/2.png" alt="robot" />
+                    </div>
                 </div>
             </div>
         </div>

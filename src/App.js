@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Main from './components/Main';
+// import Main from './components/Main';
 import { Home } from './Pages/Home';
 import Login from './Pages/Login';
 import Register from './Pages/Register';
@@ -7,14 +7,16 @@ import Chat from './Pages/Chat/Chat';
 import ChatPage from './Pages/Chat/ChatPage';
 import ProfilePage from './Pages/CurrentUser/Profile';
 import { Settings } from './Pages/CurrentUser/Settings';
+import Welcome from './Pages/Welcome';
 
 
 function App() {
   return (
    <Router>
     <Routes>
-      <Route path="/" element={<Main />} />
+      <Route path="/" element={<Welcome />} />
       <Route path="/home" element={<Home />} />
+      <Route path="/welcome" element={<Welcome />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/chat" element={<Chat />} />
