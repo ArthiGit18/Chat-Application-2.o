@@ -121,7 +121,7 @@
           cursor: pointer;
           color: red;
           font-size: 20px;
-          
+
         }
       }
 
@@ -145,29 +145,36 @@
 }
 
 // ChatPage
-
 .main-chatPage {
   width: 100%;
-  height: auto;
+  height: 100vh; // Full viewport height
   overflow: hidden;
   background: linear-gradient(165deg, rgba(171, 173, 176, 1) 0%, rgba(232, 250, 240, 1) 49%, rgba(64, 61, 36, 1) 100%);
   background-size: 400% 400%;
 
-  // padding-top: 50px;
   .container {
     border-radius: 40px;
-    // box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
     margin: 40px;
     background-color: white;
-    height: auto;
+    height: calc(100vh - 80px); // Take full height minus margins
+    display: flex;
+    flex-direction: column;
     padding: 20px;
   }
 
-  hr {
-    margin: 20px 0;
-    border: 1px solid #ccc;
-    width: 100%;
+  .chat_header {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+    padding-bottom: 10px;
+
+    hr {
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      width: 100%;
+    }
   }
 
   /* Chat Messages Area */

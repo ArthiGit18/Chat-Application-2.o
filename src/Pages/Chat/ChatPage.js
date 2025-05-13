@@ -91,8 +91,10 @@ useEffect(() => {
     return (
         <div className='main-chatPage'>
             <div className='container'>
+                <div className='chat_header'>
                 <h2>Chat with {username}</h2>
                 <hr />
+                </div>
 
                 <div className="chat_messages">
                     {messages.map((msg, index) => {
