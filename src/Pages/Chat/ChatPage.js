@@ -1,9 +1,7 @@
 import { useLocation } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import io from 'socket.io-client';
 import socket from './sockets';
-
 
 const ChatPage = () => {
     const location = useLocation();
@@ -11,12 +9,22 @@ const ChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [userData, setUserData] = useState(null);
+    const [showScrollButton, setShowScrollButton] = useState(false);
+
+    // Reference for scrolling to the last message
+    const messagesEndRef = useRef(null);
+    const chatMessagesRef = useRef(null);
 
     const storedUser =
         JSON.parse(sessionStorage.getItem("user")) ||
         JSON.parse(localStorage.getItem("user"));
     const senderEmail = storedUser?.email;
 
+    // Scroll to the last message
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        setShowScrollButton(false);
+    };
 
     // Fetch user data
     useEffect(() => {
@@ -28,75 +36,95 @@ const ChatPage = () => {
     }, [receiverId]);
 
     // Poll messages every 3 seconds
-   // Fetch messages by email instead of id
-useEffect(() => {
-    if (senderEmail && userData?.email) {
-        const fetchMessages = () => {
-            axios.get(`http://localhost:5000/api/chat/conversation/${senderEmail}/${userData.email}`)
-                .then(res => setMessages(res.data))
-                .catch(err => console.error("Error fetching messages:", err));
+    useEffect(() => {
+        if (senderEmail && userData?.email) {
+            const fetchMessages = () => {
+                axios.get(`http://localhost:5000/api/chat/conversation/${senderEmail}/${userData.email}`)
+                    .then(res => {
+                        setMessages(res.data);
+                        scrollToBottom(); // Scroll after fetching messages
+                    })
+                    .catch(err => console.error("Error fetching messages:", err));
+            };
+            fetchMessages();
+        }
+    }, [senderEmail, userData]);
+
+    useEffect(() => {
+        const handleMessage = (message) => {
+            if (
+                (message.senderEmail === storedUser.email && message.receiverEmail === userData.email) ||
+                (message.senderEmail === userData.email && message.receiverEmail === storedUser.email)
+            ) {
+                setMessages((prevMessages) => [...prevMessages, message]);
+            }
         };
 
-        fetchMessages(); // initial fetch
-    }
-}, [senderEmail, userData]);
+        socket.on('receive_message', handleMessage);
 
+        // Cleanup when component unmounts or re-renders
+        return () => {
+            socket.off('receive_message', handleMessage);
+        };
+    }, [storedUser, userData]);
 
- useEffect(() => {
-    const handleMessage = (message) => {
-        if (
-            (message.senderEmail === storedUser.email && message.receiverEmail === userData.email) ||
-            (message.senderEmail === userData.email && message.receiverEmail === storedUser.email)
-        ) {
-            setMessages((prevMessages) => [...prevMessages, message]);
+    // Scroll to the last message whenever new messages are added
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const handleSend = async () => {
+        if (input.trim() === '') return;
+
+        try {
+            const payload = {
+                senderEmail,
+                receiverEmail: userData.email,
+                text: input
+            };
+
+            const res = await axios.post('http://localhost:5000/api/chat/send', payload);
+
+            // Emit the message to the socket server
+            socket.emit('send_message', res.data);
+
+            setMessages((prev) => [...prev, res.data]);
+            setInput('');
+            scrollToBottom(); // Scroll after sending message
+        } catch (err) {
+            console.error("Error sending message:", err);
         }
     };
 
-    socket.on('receive_message', handleMessage);
-
-    // Cleanup when component unmounts or re-renders
-    return () => {
-        socket.off('receive_message', handleMessage);
-    };
-}, [storedUser, userData]);
-
-
-   const handleSend = async () => {
-    if (input.trim() === '') return;
-
-    try {
-        const payload = {
-            senderEmail,
-            receiverEmail: userData.email,
-            text: input
-        };
-
-        const res = await axios.post('http://localhost:5000/api/chat/send', payload);
-
-        // Emit the message to the socket server
-        socket.emit('send_message', res.data);
-
-        setMessages((prev) => [...prev, res.data]);
-        setInput('');
-    } catch (err) {
-        console.error("Error sending message:", err);
-    }
-};
-
-
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') handleSend();
+    };
+
+    // Detect scroll and show button
+    const handleScroll = () => {
+        if (chatMessagesRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = chatMessagesRef.current;
+            if (scrollHeight - scrollTop > clientHeight + 50) {
+                setShowScrollButton(true);
+            } else {
+                setShowScrollButton(false);
+            }
+        }
     };
 
     return (
         <div className='main-chatPage'>
             <div className='container'>
                 <div className='chat_header'>
-                <h2>Chat with {username}</h2>
-                <hr />
+                    <h2>Chat with {username}</h2>
+                    <hr />
                 </div>
 
-                <div className="chat_messages">
+                <div 
+                    className="chat_messages" 
+                    ref={chatMessagesRef} 
+                    onScroll={handleScroll}
+                >
                     {messages.map((msg, index) => {
                         const isUser = msg.senderEmail === senderEmail;
                         const avatarSrc = isUser
@@ -109,7 +137,6 @@ useEffect(() => {
                                 {!isUser && (
                                     <div className="sender_info">
                                         <img className="avatar" src={avatarSrc} alt={displayName} />
-                                        {/* <span className="username">{displayName}</span> */}
                                     </div>
                                 )}
                                 <div className={`chat_bubble ${isUser ? 'user' : 'other'}`}>
@@ -117,14 +144,21 @@ useEffect(() => {
                                 </div>
                                 {isUser && (
                                     <div className="sender_info">
-                                        {/* <span className="username">{displayName}</span> */}
                                         <img className="avatar" src={avatarSrc} alt={displayName} />
                                     </div>
                                 )}
                             </div>
                         );
                     })}
+                    {/* Invisible div to scroll into view */}
+                    <div ref={messagesEndRef} />
                 </div>
+
+                {showScrollButton && (
+                    <button className="scrollToBottomButton" onClick={scrollToBottom}>
+                        🔽
+                    </button>
+                )}
 
                 <div className="chat_input">
                     <input

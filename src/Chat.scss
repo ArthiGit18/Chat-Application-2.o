@@ -249,10 +249,10 @@
     }
 
     button {
-      background: #4caf50;
+      background: purple;
       border: none;
       color: white;
-      padding: 10px 15px;
+      padding: 10px;
       margin-left: 10px;
       border-radius: 50%;
       font-size: 18px;
@@ -260,9 +260,29 @@
       transition: background 0.3s ease;
 
       &:hover {
-        background: #45a049;
+        background: palevioletred;
       }
     }
   }
 
+}
+
+.scrollToBottomButton {
+    position: fixed;
+    bottom: 80px;
+    right: 30px;
+    // background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    background-color: purple;
+
+    &:hover {
+        background-color: palevioletred;
+    }
 }
