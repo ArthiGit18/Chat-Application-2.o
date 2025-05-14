@@ -12,7 +12,7 @@ const Welcome = () => {
       } else {
         navigate('/login');
       }
-    }, 9000); // 2 seconds delay before navigation
+    }, 9000); 
 
     return () => clearTimeout(timer);
   }, [navigate]);
