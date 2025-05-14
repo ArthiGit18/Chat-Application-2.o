@@ -17,7 +17,7 @@ const ProfilePage = () => {
     if (state?.userId) {
       const fetchUserData = async () => {
         try {
-          const response = await axios.get(`http://localhost:5000/api/auth/users/${state.userId}`);
+          const response = await axios.get(`https://chatapplication-2o-backend-production.up.railway.app/api/auth/users/${state.userId}`);
           setUserData(response.data);
           setFormData({
             username: response.data.username,
@@ -57,7 +57,7 @@ const ProfilePage = () => {
 
   try {
     const response = await axios.put(
-      `http://localhost:5000/api/auth/updateProfile/${state.userId}`,
+      `https://chatapplication-2o-backend-production.up.railway.app/api/auth/updateProfile/${state.userId}`,
       form,
       {
         headers: {
@@ -105,12 +105,12 @@ const ProfilePage = () => {
 
         <div className="profile_image_container">
           {/* <img
-            src={`http://localhost:5000${userData.avatar || '/assets/default-profile.png'}?t=${new Date().getTime()}`}
+            src={`https://chatapplication-2o-backend-production.up.railway.app${userData.avatar || '/assets/default-profile.png'}?t=${new Date().getTime()}`}
             alt="Profile Avatar"
           /> */}
 
           <img 
-  src={`http://localhost:5000${userData.avatar}?t=${new Date().getTime()}`} 
+  src={`https://chatapplication-2o-backend-production.up.railway.app${userData.avatar}?t=${new Date().getTime()}`} 
   alt="Profile" 
 />
 

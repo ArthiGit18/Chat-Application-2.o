@@ -14,7 +14,7 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:5000/api/auth/login', formData);
+            const res = await axios.post('https://chatapplication-2o-backend-production.up.railway.app/api/auth/login', formData);
 
             // Store token in both sessionStorage and localStorage
             localStorage.setItem('token', res.data.token);
@@ -70,7 +70,7 @@ const Login = () => {
                         <div className="social_buttons">
                             <button
                                 className="google-btn"
-                                onClick={() => window.location.href = "http://localhost:5000/api/auth/google"}
+                                onClick={() => window.location.href = "https://chatapplication-2o-backend-production.up.railway.app/api/auth/google"}
 
                             >
                                <p> <GoogleIcon style={{marginRight : "10px"}} /> Sign in with Google</p>

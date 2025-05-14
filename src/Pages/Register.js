@@ -33,7 +33,7 @@ const Register = () => {
                 password: formData.password
             };
 
-            const res = await axios.post('http://localhost:5000/api/auth/register', payload);
+            const res = await axios.post('https://chatapplication-2o-backend-production.up.railway.app/api/auth/register', payload);
             alert(res.data.msg || 'Registration successful!');
             navigate('/login');
         } catch (err) {
