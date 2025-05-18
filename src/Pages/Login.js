@@ -12,22 +12,28 @@ const Login = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const res = await axios.post('https://chatapplication-2o-backend-production.up.railway.app/api/auth/login', formData);
+    e.preventDefault();
+    try {
+        const res = await axios.post(
+            'https://chatapplication-2o-backend-production.up.railway.app/api/auth/login', 
+            formData,
+            {
+                withCredentials: true  // <---- This is very important for CORS and sessions
+            }
+        );
 
-            // Store token in both sessionStorage and localStorage
-            localStorage.setItem('token', res.data.token);
-            sessionStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-            sessionStorage.setItem('user', JSON.stringify(res.data.user));
+        // Store token in both sessionStorage and localStorage
+        localStorage.setItem('token', res.data.token);
+        sessionStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        sessionStorage.setItem('user', JSON.stringify(res.data.user));
 
-            alert('Login successful!');
-            navigate('/chat');
-        } catch (err) {
-            alert(err.response?.data?.msg || 'Login failed!');
-        }
-    };
+        alert('Login successful!');
+        navigate('/chat');
+    } catch (err) {
+        alert(err.response?.data?.msg || 'Login failed!');
+    }
+};
 
     
     return (
