@@ -29,7 +29,7 @@ const ChatPage = () => {
     // Fetch user data
     useEffect(() => {
         if (receiverId) {
-            axios.get(`https://chatapplication-2o-backend-production.up.railway.app/api/auth/users/${receiverId}`)
+            axios.get(`http://localhost:5000/api/auth/users/${receiverId}`)
                 .then(res => setUserData(res.data))
                 .catch(err => console.error("Failed to fetch user data:", err));
         }
@@ -39,7 +39,7 @@ const ChatPage = () => {
     useEffect(() => {
         if (senderEmail && userData?.email) {
             const fetchMessages = () => {
-                axios.get(`https://chatapplication-2o-backend-production.up.railway.app/api/chat/conversation/${senderEmail}/${userData.email}`)
+                axios.get(`http://localhost:5000/api/chat/conversation/${senderEmail}/${userData.email}`)
                     .then(res => {
                         setMessages(res.data);
                         scrollToBottom(); // Scroll after fetching messages
@@ -83,7 +83,7 @@ const ChatPage = () => {
                 text: input
             };
 
-            const res = await axios.post('https://chatapplication-2o-backend-production.up.railway.app/api/chat/send', payload);
+            const res = await axios.post('http://localhost:5000/api/chat/send', payload);
 
             // Emit the message to the socket server
             socket.emit('send_message', res.data);
@@ -128,8 +128,8 @@ const ChatPage = () => {
                     {messages.map((msg, index) => {
                         const isUser = msg.senderEmail === senderEmail;
                         const avatarSrc = isUser
-                            ? `https://chatapplication-2o-backend-production.up.railway.app${storedUser?.avatar || '/assets/default-profile.png'}`
-                            : `https://chatapplication-2o-backend-production.up.railway.app${userData?.avatar || '/assets/default-profile.png'}`;
+                            ? `http://localhost:5000${storedUser?.avatar || '/assets/default-profile.png'}`
+                            : `http://localhost:5000${userData?.avatar || '/assets/default-profile.png'}`;
                         const displayName = isUser ? storedUser?.username : userData?.username;
 
                         return (

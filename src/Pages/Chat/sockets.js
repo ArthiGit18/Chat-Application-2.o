@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
 
-const socket = io('https://chatapplication-2o-backend-production.up.railway.app', {
+const socket = io('http://localhost:5000', {
     transports: ['websocket'],
     upgrade: false
 });

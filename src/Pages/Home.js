@@ -16,7 +16,7 @@ export const Home = () => {
 
   const getBotReply = async (userText) => {
     try {
-      const response = await axios.get('https://api.wit.ai/message', {
+      const response = await axios.get('http://api.wit.ai/message', {
         params: { q: userText },
         headers: {
           Authorization: `LZ7IPSZ6FP5GKRP6ZS7KJQWXEBKIHWN4`, // 🔁 Replace this

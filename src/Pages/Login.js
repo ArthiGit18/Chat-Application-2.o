@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault();
     try {
         const res = await axios.post(
-            'https://chatapplication-2o-backend-production.up.railway.app/api/auth/login', 
+            'http://localhost:5000/api/auth/login', 
             formData,
             {
                 withCredentials: true  // <---- This is very important for CORS and sessions
@@ -76,7 +76,7 @@ const Login = () => {
                         <div className="social_buttons">
                             <button
                                 className="google-btn"
-                                onClick={() => window.location.href = "https://chatapplication-2o-backend-production.up.railway.app/api/auth/google"}
+                                onClick={() => window.location.href = "http://localhost:5000/api/auth/google"}
 
                             >
                                <p> <GoogleIcon style={{marginRight : "10px"}} /> Sign in with Google</p>

@@ -21,17 +21,17 @@ const ContactList = () => {
   // ✅ Wrapping fetchContacts with useCallback
   const fetchContacts = useCallback(async () => {
     try {
-      const res = await axios.get('https://chatapplication-2o-backend-production.up.railway.app/api/auth/users/loggedin');
+      const res = await axios.get('http://localhost:5000/api/auth/users/loggedin');
       const users = res.data.filter((user) => user.email !== storedUser?.email);
 
       const updatedUsers = await Promise.all(
         users.map(async (user) => {
           const lastMessageResponse = await axios.get(
-            `https://chatapplication-2o-backend-production.up.railway.app/api/chat/lastMessage/${storedUser.email}/${user.email}`
+            `http://localhost:5000/api/chat/lastMessage/${storedUser.email}/${user.email}`
           );
 
           const unseenCountResponse = await axios.get(
-            `https://chatapplication-2o-backend-production.up.railway.app/api/chat/unseenCount/${storedUser.email}/${user.email}`
+            `http://localhost:5000/api/chat/unseenCount/${storedUser.email}/${user.email}`
           );
 
           return {
@@ -101,7 +101,7 @@ const ContactList = () => {
 
   const handleDeleteContact = async (email) => {
     try {
-      await axios.delete('https://chatapplication-2o-backend-production.up.railway.app/api/auth/deleteProfile', {
+      await axios.delete('http://localhost:5000/api/auth/deleteProfile', {
         data: { email },
       });
 
@@ -116,7 +116,7 @@ const ContactList = () => {
   const handleContactClick = async (contact) => {
     try {
       // Mark all messages as seen when the chat is opened
-      await axios.put(`https://chatapplication-2o-backend-production.up.railway.app/api/chat/markAsSeen/${contact.email}/${storedUser.email}`);
+      await axios.put(`http://localhost:5000/api/chat/markAsSeen/${contact.email}/${storedUser.email}`);
 
       // Navigate to chat page
       navigate(`/chatPage`, {
@@ -143,7 +143,7 @@ const ContactList = () => {
             <div onClick={handleDropdownToggle} className="user_info">
               <span>{storedUser.username}</span>
               <img
-                src={storedUser?.avatar ? `https://chatapplication-2o-backend-production.up.railway.app${storedUser.avatar}` : "./assets/avator/1.jpeg"}
+                src={storedUser?.avatar ? `http://localhost:5000${storedUser.avatar}` : "./assets/avator/1.jpeg"}
                 alt={storedUser?.username || 'User Avatar'}
               />
               <FiChevronDown size={16} />
@@ -184,7 +184,7 @@ const ContactList = () => {
             onClick={() => handleContactClick(contact)}
             style={{ cursor: 'pointer' }}
           >
-            <img src={`https://chatapplication-2o-backend-production.up.railway.app${contact.avatar}`} alt="avatar" />
+            <img src={`http://localhost:5000${contact.avatar}`} alt="avatar" />
             <div className="contact_list_member_info">
               <h3>{contact.name}</h3>
               <p className="last_message">{contact.lastMessage}</p>
